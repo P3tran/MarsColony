@@ -1,0 +1,85 @@
+plugins {
+	id 'org.springframework.boot' version '2.1.9.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+	id 'java'
+	id 'com.palantir.docker' version "0.21.0"
+}
+
+apply plugin: 'io.spring.dependency-management'
+
+group = 'com.pefthymiou'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+repositories {
+	mavenCentral()
+}
+
+sourceSets {
+	integrationTest {
+		java {
+			compileClasspath += main.output + test.output
+			runtimeClasspath += main.output + test.output
+			srcDir file('src/integration-test/java')
+		}
+		resources.srcDir file('src/integration-test/resources')
+	}
+}
+
+configurations {
+	integrationTestCompile.extendsFrom testCompile
+	integrationTestRuntime.extendsFrom testRuntime
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.apache.commons:commons-lang3:3.9'
+	implementation 'com.auth0:java-jwt:3.4.0'
+	implementation 'com.google.guava:guava:27.1-jre'
+
+	runtimeOnly 'com.h2database:h2'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.assertj:assertj-core'
+	testImplementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
+	testImplementation 'com.google.guava:guava:27.1-jre'
+
+	integrationTestCompile 'org.springframework.boot:spring-boot-starter-test'
+	integrationTestCompile 'org.springframework.boot:spring-boot-starter-security'
+	integrationTestCompile 'org.springframework.security:spring-security-test'
+	integrationTestCompile 'org.springframework.boot:spring-boot-starter-web'
+	integrationTestCompile 'org.springframework.boot:spring-boot-starter-data-jpa'
+	integrationTestCompile 'org.springframework.boot:spring-boot-starter-mail'
+	integrationTestCompile 'org.springframework:spring-context-support:5.1.6.RELEASE'
+	integrationTestCompile 'org.apache.commons:commons-lang3:3.9'
+	integrationTestCompile 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
+	integrationTestCompile 'com.auth0:java-jwt:3.4.0'
+	integrationTestCompile 'com.google.guava:guava:27.1-jre'
+
+	integrationTestRuntime 'com.h2database:h2'
+}
+
+task integrationTest(type: Test) {
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
+	outputs.upToDateWhen { false }
+	mustRunAfter test
+}
+
+check.dependsOn integrationTest
+
+task unpack(type: Copy) {
+	dependsOn bootJar
+	from(zipTree(tasks.bootJar.outputs.files.singleFile))
+	into("build/dependency")
+}
+
+docker {
+	name "${project.group}/${bootJar.baseName}"
+	copySpec.from(tasks.unpack.outputs).into("dependency")
+	buildArgs(['DEPENDENCY': "dependency"])
+}

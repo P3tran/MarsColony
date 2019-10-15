@@ -1,0 +1,306 @@
+swagger: "2.0"
+info:
+  description: |
+    Backend service that offers a curated collection of units to Mars colonists
+  version: "1.0.0"
+  title: Mars
+  contact:
+    name: nivoul@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+host: localhost:8080
+basePath: /api/v1
+schemes:
+  - http
+paths:
+
+  /unit:
+    post:
+      tags:
+        - unit
+      summary: Creates a new unit
+      operationId: createUnit
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: New unit information
+          required: true
+          schema:
+            $ref: "#/definitions/UnitRequest"
+      responses:
+        201:
+          description: Unit created
+        400:
+          description: Invalid request
+        422:
+          description: Unprocessable entity
+
+  /unit/{id}:
+    get:
+      tags:
+        - unit
+      summary: Returns a unit.
+      operationId: getUnit
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: id
+          description: ID of the unit
+          required: true
+          type: string
+          format: int
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            $ref: "#/definitions/UnitResponse"
+        404:
+          description: Unit not found
+
+    delete:
+      tags:
+        - unit
+      summary: Deletes a unit
+      operationId: deleteUnit
+      parameters:
+        - in: path
+          name: id
+          description: ID of the unit.
+          required: true
+          type: string
+          format: int
+      responses:
+        204:
+          description: Successful operation
+        404:
+          description: Unit not found
+        422:
+          description: Unprocessable entity
+
+    patch:
+      tags:
+        - unit
+      summary: Updates a unit
+      description: The id and title of the unit may not be updated. Fields that are not included will not be updated.
+      operationId: patchUnit
+      consumes:
+        - application/json
+      parameters:
+        - in: path
+          name: id
+          description: ID of the unit.
+          required: true
+          type: string
+          format: int
+        - in: body
+          name: body
+          description: New unit information
+          required: true
+          schema:
+            $ref: "#/definitions/UnitRequest"
+      responses:
+        204:
+          description: Successful operation
+        404:
+          description: Unit not found
+        422:
+          description: Unprocessable entity
+
+  /booking:
+    post:
+      tags:
+        - booking
+      summary: Creates a new booking
+      operationId: createBooking
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: New booking information
+          required: true
+          schema:
+            $ref: "#/definitions/BookingRequest"
+      responses:
+        201:
+          description: Booking created
+        400:
+          description: Invalid request
+        404:
+          description: Unit not found
+        422:
+          description: Unprocessable entity
+
+  /units:
+    get:
+      tags:
+        - search
+      summary: Search for units.
+      operationId: searchUnit
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: q
+          description: Search query. Minimum size is 2.
+          required: true
+          type: string
+          format: string
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/UnitResponse"
+        204:
+          description: No results
+        400:
+          description: Invalid request
+
+  /units/browse:
+    get:
+      tags:
+        - browse
+      summary: Retrieve all units.
+      operationId: allhUnits
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: page
+          description: Number of the page
+          required: true
+          type: string
+          format: int
+        - in: query
+          name: size
+          description: Size of the page
+          required: true
+          type: string
+          format: int
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/UnitsPage"
+        400:
+          description: Invalid request
+
+
+definitions:
+  UnitRequest:
+    type: object
+    properties:
+      title:
+        type: string
+      region:
+        type: string
+      description:
+        type: string
+      cancellationPolicy:
+        type: string
+      price:
+        type: integer
+      rating:
+        type: integer
+      imageUrl:
+        type: string
+      timezone:
+        type: string
+
+  UnitResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      title:
+        type: string
+      region:
+        type: string
+      description:
+        type: string
+      cancellationPolicy:
+        type: string
+      price:
+        type: integer
+      rating:
+        type: integer
+      imageUrl:
+        type: string
+      timezone:
+        type: string
+
+  BookingRequest:
+    type: object
+    properties:
+      userId:
+        type: integer
+      unitId:
+        type: integer
+      checkIn:
+        type: string
+        example: "2019-05-15"
+      checkOut:
+        type: string
+        example: "2019-05-20"
+
+  UnitsPage:
+    type: object
+    properties:
+      content:
+        type: array
+        items:
+          $ref: "#/definitions/UnitResponse"
+      pageable:
+        $ref: "#/definitions/Pageable"
+      totalPages:
+        type: integer
+      totalElements:
+        type: integer
+      last:
+        type: boolean
+      size:
+        type: integer
+      number:
+        type: integer
+      sort:
+        $ref: "#/definitions/Sort"
+      first:
+        type: boolean
+      numberOfElements:
+        type: integer
+      empty:
+        type: boolean
+
+  Pageable:
+    type: object
+    properties:
+      sort:
+        $ref: "#/definitions/Sort"
+      offset:
+        type: integer
+      pageSize:
+        type: integer
+      pageNumber:
+        type: integer
+      paged:
+        type: boolean
+      unpaged:
+        type: boolean
+
+  Sort:
+    type: object
+    properties:
+      sorted:
+        type: boolean
+      unsorted:
+        type: boolean
+      empty:
+        type: boolean
